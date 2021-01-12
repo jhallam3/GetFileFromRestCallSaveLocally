@@ -1,6 +1,7 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -14,7 +15,7 @@ namespace RestCallSaveFileClass
 
         public async Task<bool> RunRestCallSaveFileFlocallyAsync(string WebhookURL, string fileNameToSaveAs, string path, string fileID)
         {
-            var webhookcontents = await GetContentFromRestCallAsync(WebhookURL+ "&FileID="+fileID);
+            var webhookcontents = await GetContentFromRestCallAsync(WebhookURL + "&FileID=" + fileID);
             var Deserialse = JsonConvert.DeserializeObject<JsonToFileData>(webhookcontents);
             //string to byte
             byte[] bytes = Convert.FromBase64String(Deserialse.Done.File.Contents);
@@ -23,7 +24,14 @@ namespace RestCallSaveFileClass
         }
         public void SaveFile(byte[] contents, string fileNameToSaveAs, string path)
         {
-            System.IO.File.WriteAllBytes(path + "\\" + fileNameToSaveAs + ".xml", contents);
+            var reader = new StreamReader(new MemoryStream(contents), true);
+
+            using (var w = new StreamWriter(path + "\\" + fileNameToSaveAs + ".xml", false, encoding: Encoding.UTF8))
+            {
+                w.Write(reader.ReadToEnd());
+            }
+
+
         }
 
         public async Task<String> GetContentFromRestCallAsync(string WebhookURL)
